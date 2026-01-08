@@ -3,21 +3,74 @@ name: Deploy PHP App to GoDaddy Hosting
 on:
   push:
     branches:
-      - main   # change if using master
+      - main   # change to master if needed
 
 jobs:
   ftp-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      # 1️⃣ Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Deploy via FTP to GoDaddy
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-      with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./          # project root
-        server-dir: /public_html/
+      # 2️⃣ Verify FTP secrets exist (not empty)
+      - name: Verify FTP secrets are supplied
+        run: |
+          echo "Verifying FTP secrets..."
+
+          if [ -z "${{ secrets.FTP_SERVER }}" ]; then
+            echo "❌ FTP_SERVER is EMPTY"
+            exit 1
+          else
+            echo "✅ FTP_SERVER is SET"
+          fi
+
+          if [ -z "${{ secrets.FTP_USERNAME }}" ]; then
+            echo "❌ FTP_USERNAME is EMPTY"
+            exit 1
+          else
+            echo "✅ FTP_USERNAME is SET"
+          fi
+
+          if [ -z "${{ secrets.FTP_PASSWORD }}" ]; then
+            echo "❌ FTP_PASSWORD is EMPTY"
+            exit 1
+          else
+            echo "✅ FTP_PASSWORD is SET"
+          fi
+
+      # 3️⃣ Debug secret lengths (safe)
+      - name: Debug secret lengths
+        run: |
+          echo "FTP_SERVER length: ${#FTP_SERVER}"
+          echo "FTP_USERNAME length: ${#FTP_USERNAME}"
+          echo "FTP_PASSWORD length: ${#FTP_PASSWORD}"
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+
+      # 4️⃣ Masked secret preview (safe)
+      - name: Masked secret preview
+        run: |
+          echo "FTP_SERVER preview: ${FTP_SERVER:0:1}***${FTP_SERVER: -1}"
+          echo "FTP_USERNAME preview: ${FTP_USERNAME:0:1}***${FTP_USERNAME: -1}"
+          echo "FTP_PASSWORD preview: ${FTP_PASSWORD:0:1}***${FTP_PASSWORD: -1}"
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+
+      # 5️⃣ Deploy to GoDaddy via FTPS (CORRECT for Pure-FTPd)
+      - name: Deploy via FTPS to GoDaddy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          local-dir: ./
+          server-dir: /public_html/
+          log-level: verbose          
