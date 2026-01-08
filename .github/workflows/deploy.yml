@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout code
+      # 1️⃣ Checkout repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2️⃣ Verify secrets exist (NOT empty)
+      # 2️⃣ Verify FTP secrets exist (not empty)
       - name: Verify FTP secrets are supplied
         run: |
           echo "Verifying FTP secrets..."
@@ -51,7 +51,7 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
 
-      # 4️⃣ Masked preview (safe)
+      # 4️⃣ Masked secret preview (safe)
       - name: Masked secret preview
         run: |
           echo "FTP_SERVER preview: ${FTP_SERVER:0:1}***${FTP_SERVER: -1}"
@@ -62,14 +62,14 @@ jobs:
           FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
 
-      # 5️⃣ Deploy to GoDaddy via FTP (FORCED FTP MODE)
-      - name: Deploy via FTP to GoDaddy
+      # 5️⃣ Deploy to GoDaddy via FTPS (CORRECT for Pure-FTPd)
+      - name: Deploy via FTPS to GoDaddy
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ftp
+          protocol: ftps
           port: 21
           local-dir: ./
           server-dir: /public_html/
